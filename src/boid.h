@@ -13,17 +13,33 @@
 class Boid
 {
 public:
-    Boid(const glm::vec3 position, const glm::vec3 color)
-        : position(position), color(color), acceleration(glm::vec3(0.0f, 0.0f, 0.0f)) {} // Constructor
+    Boid(const glm::vec3 position, const glm::vec3 color, const glm::vec3 acceleration)
+        : position(position), color(color), acceleration(acceleration) {
+        } // Constructor
 
     void update()
     {
-        setNewTarget();
-        moveToTarget();
+        // setNewTarget();
+        // moveToTarget();
 
         velocity += acceleration;
+        // std::cout << acceleration.x << std::endl;
         velocity = limit(MAX_VELOCITY, velocity);
         position += velocity;
+
+        if (position.x < 0){
+            acceleration.x += 0.02f;
+        }
+        if (position.x > 800){
+            acceleration.x -= 0.02f;
+        }
+        if (position.y < 0){
+            acceleration.y += 0.02f;
+        }
+        if (position.y > 600){
+            acceleration.y -= 0.02f;
+        }
+
     }; // Update the boid's state
 
     glm::vec3 limit(float maxSpeed, glm::vec3 &v)
@@ -51,15 +67,15 @@ public:
     void setNewTarget()
     {
         float distance = glm::length(target - position);
-        std::cout << distance << std::endl;
+        // std::cout << distance << std::endl;
         if (distance < TARGET_THRESHOLD)
         {
             target = glm::vec3(Util::randomNumber(0.0f, 800.0f), Util::randomNumber(0.0f, 600.0f), 0.0f);
-            std::cout << target.x << ' ' << target.y << std::endl;
+            // std::cout << target.x << ' ' << target.y << std::endl;
         }
     }
 
-    void draw(const Shader &shaderProgram)
+    void render(const Shader &shaderProgram)
     {
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, position);
@@ -79,6 +95,10 @@ public:
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 
+    bool operator!=(const Boid& other) const {
+        return this != &other;
+    }
+
     // Getter and Setter for width and height
     float getWidth() const { return width; }
     void setWidth(float w) { width = w; }
@@ -92,8 +112,12 @@ public:
     glm::vec3 getVelocity() const { return velocity; }
     void setVelocity(glm::vec3 v) { velocity = v; }
 
+    glm::vec3 getAcceleration() const { return acceleration; }
+    void setAcceleration(glm::vec3 a) { acceleration = a; }
+    void addAcceleration(glm::vec3 a) { acceleration += a; }
+
 private:
-    const float MAX_VELOCITY = 1.0f;
+    const float MAX_VELOCITY = 0.5f;
     const float MAX_ACCELERATION = 0.02f;
     const float TARGET_THRESHOLD = 25.0f;
 
@@ -104,8 +128,8 @@ private:
     glm::vec3 acceleration;
 
     glm::vec3 color;
-    float width = 50.0f;
-    float height = 50.0f;
+    float width = 10.0f;
+    float height = 10.0f;
 };
 
 #endif // BOID_H

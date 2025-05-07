@@ -9,14 +9,15 @@
 
 #include "shader.h"
 #include "boid.h"
+#include "boidManager.h"
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
 
-Boid boid1(glm::vec3(400.0f, 300.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
-
+    BoidManager boids = BoidManager(100);
+    
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -85,9 +86,8 @@ int main() {
         shaderProgram.setMat4("u_projection", projection);
 
         glBindVertexArray(VAO);
-        boid1.draw(shaderProgram);
-        boid1.update();
-
+        boids.update();
+        boids.render(shaderProgram);
 
         glfwSwapBuffers(window);
         glfwPollEvents(); 

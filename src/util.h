@@ -23,7 +23,7 @@ namespace Util {
     }
 
     // Generate a random 3D vector with components in the range [0, 1)
-    inline float randomNumber(float min, float max) {
+    inline int randomNumber(float min, float max) {
         std::random_device rd;  // Non-deterministic random seed
         std::mt19937 gen(rd()); // Mersenne Twister generator
         std::uniform_int_distribution<> dist(min, max); // Range: [1, 100]
