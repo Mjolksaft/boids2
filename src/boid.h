@@ -13,54 +13,129 @@
 class Boid
 {
 public:
-    Boid(const glm::vec3 position, const glm::vec3 color, const glm::vec3 acceleration)
-        : position(position), color(color), acceleration(acceleration) {
-        } // Constructor
+    Boid()
+    {
+        position = glm::vec3(Util::randomNumber(0.0f, 800.0f), Util::randomNumber(0.0f, 600.0f), 0);
+        velocity = glm::vec3(0, 0, 0);
+        acceleration = glm::vec3(Util::randomNegativeNumber(0.0f, 100.0f), Util::randomNegativeNumber(0.0f, 100.0f), 0);
+    }
 
     void update()
     {
-        // setNewTarget();
-        // moveToTarget();
 
-        velocity += acceleration;
-        // std::cout << acceleration.x << std::endl;
-        velocity = limit(MAX_VELOCITY, velocity);
         position += velocity;
+        velocity += acceleration;
+        velocity = Util::limit(MAX_VELOCITY, velocity);
 
-        if (position.x < 0){
-            acceleration.x += 0.02f;
-        }
-        if (position.x > 800){
-            acceleration.x -= 0.02f;
-        }
-        if (position.y < 0){
-            acceleration.y += 0.02f;
-        }
-        if (position.y > 600){
-            acceleration.y -= 0.02f;
-        }
-
-    }; // Update the boid's state
-
-    glm::vec3 limit(float maxSpeed, glm::vec3 &v)
-    {
-        float mag = glm::length(v);
-        if (mag == 0)
-            return v;
-
-        if (mag > maxSpeed)
+        if (position.x > 850.0f)
         {
-            v /= mag;
-            v *= maxSpeed;
+            position.x = 0.0f;
+        }
+        if (position.x < -50.0f)
+        {
+            position.x = 800.0f;
+        }
+        if (position.y > 650.0f)
+        {
+            position.y = 0.0f;
+        }
+        if (position.y < -50.0f)
+        {
+            position.y = 600.0f;
         }
 
-        return v;
+    };
+
+    glm::vec3 align(std::vector<Boid> flock)
+    {
+        glm::vec3 steering = glm::vec3(0.0f, 0.0f, 0.0f);
+        int perception = 100;
+        int total = 0;
+
+        for (Boid& other : flock)
+        {
+            float dist = glm::length(other.getPosition() - getPosition());
+            if (&other != this && dist < perception)
+            {
+                steering += other.getVelocity();
+                total += 1;
+            }
+        }
+        if (total > 0) {
+            steering /= total;
+            steering = Util::setMag(MAX_VELOCITY, steering);
+            
+            steering -= getVelocity();
+            steering = Util::limit(ALIGN_MAX_FORCE, steering);
+        }
+        return steering;
+    };
+
+    glm::vec3 cohesion(std::vector<Boid> flock)
+    {
+        glm::vec3 steering = glm::vec3(0.0f, 0.0f, 0.0f);
+        int perception = 100;
+        int total = 0;
+
+        for (Boid& other : flock)
+        {
+            float dist = glm::length(other.getPosition() - getPosition());
+            if (&other != this && dist < perception)
+            {
+                steering += other.getPosition();
+                total += 1;
+            }
+        }
+        if (total > 0) {
+            steering /= total;
+            steering -= getPosition();
+            steering = Util::setMag(MAX_VELOCITY, steering);
+            steering -= getVelocity();
+            steering = Util::limit(COHESION_MAX_FORCE, steering);
+        }
+        return steering;
+    };
+
+    glm::vec3 seperation(std::vector<Boid> flock)
+    {
+        glm::vec3 steering = glm::vec3(0.0f, 0.0f, 0.0f);
+        int perception = 50;
+        int total = 0;
+
+        for (Boid& other : flock)
+        {
+            float dist = glm::length(other.getPosition() - getPosition());
+            if (&other != this && dist < perception && dist > 0.0f)
+            {
+                glm::vec3 diff = getPosition() - other.getPosition();
+                diff /= dist;
+                steering += diff;
+                total += 1;
+            }
+        }
+        if (total > 0) {
+            steering /= total;
+            steering = Util::setMag(MAX_VELOCITY, steering);
+            steering -= getVelocity();
+            steering = Util::limit(SEPERATION_MAX_FORCE, steering);
+        }
+        return steering;
+    };
+
+    void flock(std::vector<Boid> boids) {
+        acceleration *= 0;
+        auto alignment = this->align(boids);
+        auto cohesion = this->cohesion(boids);
+        auto seperation = this->seperation(boids);
+        acceleration += seperation;
+        acceleration += alignment;
+        acceleration += cohesion;
     }
 
     void moveToTarget()
     {
         glm::vec3 diff = target - position;
-        acceleration = limit(MAX_ACCELERATION, diff);
+        acceleration = Util::limit(MAX_ACCELERATION, diff);
         // std::cout << acceleration.x << ' ' << acceleration.y << std::endl;
     }
 
@@ -95,7 +170,8 @@ public:
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 
-    bool operator!=(const Boid& other) const {
+    bool operator!=(const Boid &other) const
+    {
         return this != &other;
     }
 
@@ -117,9 +193,12 @@ public:
     void addAcceleration(glm::vec3 a) { acceleration += a; }
 
 private:
-    const float MAX_VELOCITY = 0.5f;
-    const float MAX_ACCELERATION = 0.02f;
+    const float MAX_VELOCITY = 1.f;
+    const float MAX_ACCELERATION = 1.f;
     const float TARGET_THRESHOLD = 25.0f;
+    const float ALIGN_MAX_FORCE = 0.01f;
+    const float COHESION_MAX_FORCE = 0.01f;
+    const float SEPERATION_MAX_FORCE = 0.01f;
 
     glm::vec3 position;
     glm::vec3 velocity = glm::vec3(0.0f, 0.0f, 0.0f);

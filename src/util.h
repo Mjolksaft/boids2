@@ -34,6 +34,47 @@ namespace Util {
         return randomNumber;
     }
 
+
+        // Generate a random 3D vector with components in the range [0, 1)
+    inline int randomNegativeNumber(float min, float max) {
+        float negative = Util::randomNumber(0.f,1.f);
+        float randomNumber = Util::randomNumber(min,max);
+        
+        if (negative < 0.5f) {
+            randomNumber = randomNumber * -1;
+        }
+
+        return randomNumber;
+    }
+
+
+    inline glm::vec3 limit(float maxSpeed, glm::vec3 &v)
+    {
+        float mag = glm::length(v);
+        if (mag == 0)
+            return v;
+
+        if (mag > maxSpeed)
+        {
+            v /= mag;
+            v *= maxSpeed;
+        }
+
+        return v;
+    }
+
+    inline glm::vec3 setMag(float maxSpeed, glm::vec3 &v)
+    {
+        float mag = glm::length(v);
+        if (mag == 0)
+            return v;
+
+        v /= mag;
+        v *= maxSpeed;
+
+        return v;
+    }
+
 }
 
 #endif // UTIL_H
